@@ -36,6 +36,24 @@ Real-time monitoring using:
 
 ---
 
+## 👨‍💻 Developer
+
+<div align="center">
+
+<img src="https://media.licdn.com/dms/image/v2/D5603AQELUBtsnsHSMw/profile-displayphoto-scale_200_200/B56ZqWa3UMH8AY-/0/1763460223180?e=1767830400&v=beta&t=lGB_KA1SJ_qQaB9ujBDbQ9AVeKxBElfglpPMAtAaTRE" alt="Ajith Kumar Murugan" width="150" height="150" style="border-radius: 50%; border: 3px solid #00f5a0;">
+
+### **Ajith Kumar Murugan**
+**AI Research Engineer/Scientist**
+
+[![LinkedIn](https://img.shields.io/badge/LinkedIn-Connect-0077b5?style=for-the-badge&logo=linkedin)](https://www.linkedin.com/in/ajitharunai/)
+[![GitHub](https://img.shields.io/badge/GitHub-arunaiajith-181717?style=for-the-badge&logo=github)](https://github.com/arunaiajith)
+
+*Passionate about creating AI solutions that make a real-world impact*
+
+</div>
+
+---
+
 ## ✨ Features
 
 ### Core Functionality
@@ -445,15 +463,15 @@ SOFTWARE.
 
 For questions, suggestions, or contributions:
 
-- 🐛 **Report Issues**: [GitHub Issues](#)
-- 💡 **Feature Requests**: [Discussion Board](#)
-- 📧 **Email**: support@drivesafe-ai.com
+- 👨‍💻 **Developer**: [Ajith Kumar Murugan](https://www.linkedin.com/in/ajitharunai/)
+- 🐛 **Report Issues**: [GitHub Issues](https://github.com/arunaiajith)
+- 💡 **Feature Requests**: Open a discussion on GitHub
 
 ---
 
 <div align="center">
 
-**Made with ❤️ for safer roads**
+**Made with ❤️ for safer roads by [Ajith Kumar Murugan](https://www.linkedin.com/in/ajitharunai/)**
 
 ⭐ Star this project if you find it useful!
 
