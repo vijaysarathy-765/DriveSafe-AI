@@ -151,7 +151,7 @@ if __name__ == '__main__':
         print("\nPress CTRL+C to stop the server\n")
         print("=" * 60)
         
-        app.run(host='0.0.0.0', port=5000, debug=False, threaded=True)
+        app.run(host='0.0.0.0', port=5001, debug=False, threaded=True)
     except KeyboardInterrupt:
         print("\n\n[STOP] Shutting down...")
         detector.cleanup()
