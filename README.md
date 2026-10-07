@@ -1,480 +1,349 @@
-# 🚗 DriveSafe AI - Driver Drowsiness Detection System
+# DriveSafe AI - Driver Drowsiness Detection and Alert System
 
-<div align="center">
+## Overview
 
-![DriveSafe AI](https://img.shields.io/badge/DriveSafe-AI-00f5a0?style=for-the-badge)
-![Python](https://img.shields.io/badge/Python-3.8+-blue?style=for-the-badge&logo=python)
-![Flask](https://img.shields.io/badge/Flask-3.0-black?style=for-the-badge&logo=flask)
-![OpenCV](https://img.shields.io/badge/OpenCV-4.8-red?style=for-the-badge&logo=opencv)
-![License](https://img.shields.io/badge/License-MIT-green?style=for-the-badge)
+DriveSafe AI is a real-time driver drowsiness detection and alert system designed to improve driving safety by monitoring facial features through a webcam.
 
-**A real-time AI-powered system to detect driver drowsiness and prevent accidents**
+The system uses computer vision and facial landmark detection to analyze the driver's eyes and mouth. It calculates the Eye Aspect Ratio (EAR) to identify prolonged eye closure and the Mouth Aspect Ratio (MAR) to detect yawning. These signals are combined to estimate the driver's drowsiness level.
 
-[Features](#-features) • [Installation](#-installation) • [Usage](#-usage) • [Demo](#-demo-flow) • [Technology](#-technology-stack)
+When a high level of drowsiness is detected, the system provides a visual warning and an audible alert to attract the driver's attention.
 
-</div>
+## Key Features
 
----
+- Real-time driver face monitoring
+- Facial landmark detection using MediaPipe
+- Eye Aspect Ratio (EAR) calculation
+- Mouth Aspect Ratio (MAR) calculation
+- Eye closure and blink detection
+- Yawning detection
+- Real-time drowsiness score
+- Normal, Warning, and Alert status levels
+- Audible drowsiness alert
+- Visual warning on the monitoring interface
+- Real-time eye and mouth landmark visualization
+- Alert history
+- Drowsiness timeline visualization
+- Flask-based backend
+- Browser-based monitoring interface
 
-## 📋 Overview
+## How It Works
 
-**DriveSafe AI** is an intelligent driver drowsiness detection system that uses computer vision and machine learning to monitor drivers in real-time. By analyzing facial features, eye movements, and yawning patterns, the system can detect early signs of fatigue and alert drivers before accidents occur.
+The system processes the driver's webcam video continuously.
 
-### 🎯 Problem Statement
+### Detection Pipeline
 
-- **1.35 million** people die in road accidents globally each year
-- **20%** of fatal crashes are caused by drowsy driving
-- Drivers are often unaware of early drowsiness signs
+```text
+Webcam
+   ↓
+Video Capture
+   ↓
+Face Detection
+   ↓
+Facial Landmark Detection
+   ↓
+ ┌───────────────────────┐
+ │                       │
+ ▼                       ▼
+Eye Landmarks       Mouth Landmarks
+ │                       │
+ ▼                       ▼
+EAR Calculation      MAR Calculation
+ │                       │
+ └───────────┬───────────┘
+             ▼
+     Drowsiness Analysis
+             ↓
+      Drowsiness Score
+             ↓
+   ┌─────────┼─────────┐
+   ▼         ▼         ▼
+ Normal    Warning    Alert
+                       ↓
+              Visual + Audio Alert
 
-### 💡 Solution
 
-Real-time monitoring using:
-- **Eye Aspect Ratio (EAR)** to detect eye closure
-- **Mouth Aspect Ratio (MAR)** to detect yawning
-- **MediaPipe Face Mesh** for precise facial landmark detection
-- **Instant alerts** with audio and visual warnings
 
----
+Detection Methods
+1. Eye Aspect Ratio (EAR)
+The Eye Aspect Ratio (EAR) is used to determine whether the driver's eyes are open or closed.
+Facial landmarks around the eye are detected using MediaPipe. The distances between the vertical and horizontal eye landmarks are used to calculate EAR.
+The general EAR calculation is:
+EAR = (||p2 - p6|| + ||p3 - p5||) / (2 × ||p1 - p4||)
 
-## 👨‍💻 Developer
+Where:
+- p1 and p4 represent the horizontal eye points.
+- p2, p3, p5, and p6 represent vertical eye points.
+A lower EAR indicates that the eye is becoming closed.
+The system also monitors how long the eyes remain closed. Prolonged eye closure is treated as an important indication of possible drowsiness.
+2. Mouth Aspect Ratio (MAR)
+The Mouth Aspect Ratio (MAR) is used to detect yawning.
+Facial landmarks around the mouth are analyzed and the vertical and horizontal distances are used to calculate the mouth aspect ratio.
+A higher MAR value indicates that the mouth is open.
+If the mouth remains open for a sustained period, the system considers it a possible yawn.
+3. Drowsiness Score
+The system combines multiple signals instead of depending on only one measurement.
+The drowsiness score considers factors such as:
+- Eye closure
+- Duration of eye closure
+- Eye drowsiness detection
+- Percentage of time eyes remain closed
+- Yawning
+- Recent yawns
+- Face detection status
+The resulting value is limited to a range of 0 to 100.
+The score is then converted into one of three status levels:
+Score	Status
+0 - 29	Normal
+30 - 69	Warning
+70 - 100	Alert
 
-<div align="center">
 
-<img src="https://media.licdn.com/dms/image/v2/D5603AQELUBtsnsHSMw/profile-displayphoto-scale_200_200/B56ZqWa3UMH8AY-/0/1763460223180?e=1767830400&v=beta&t=lGB_KA1SJ_qQaB9ujBDbQ9AVeKxBElfglpPMAtAaTRE" alt="Ajith Kumar Murugan" width="150" height="150" style="border-radius: 50%; border: 3px solid #00f5a0;">
-
-### **Ajith Kumar Murugan**
-**AI Research Engineer/Scientist**
-
-[![LinkedIn](https://img.shields.io/badge/LinkedIn-Connect-0077b5?style=for-the-badge&logo=linkedin)](https://www.linkedin.com/in/ajitharunai/)
-[![GitHub](https://img.shields.io/badge/GitHub-arunaiajith-181717?style=for-the-badge&logo=github)](https://github.com/arunaiajith)
-
-*Passionate about creating AI solutions that make a real-world impact*
-
-</div>
-
----
-
-## ✨ Features
-
-### Core Functionality
-- ✅ **Real-time face detection** using MediaPipe Face Mesh (468 landmarks)
-- ✅ **Eye tracking** with EAR calculation to detect prolonged eye closure
-- ✅ **Blink detection** to identify excessive blinking patterns
-- ✅ **Yawn detection** using mouth aspect ratio analysis
-- ✅ **Drowsiness scoring** algorithm (0-100 scale)
-- ✅ **Multi-level alerts** (Normal/Warning/Alert)
-
-### Dashboard Features
-- 📹 **Live video feed** with facial landmark overlay
-- 📊 **Real-time statistics** (blink count, yawn count, EAR/MAR values)
-- 📈 **Interactive Chart.js graph** showing drowsiness timeline
-- 🎨 **Premium dark mode UI** with glassmorphism effects
-- ⚡ **Responsive design** for all screen sizes
-- 🔊 **Audio alerts** when drowsiness detected
-- 🚨 **Visual alerts** with red screen flash
-
-### Technical Highlights
-- ⚡ **15+ FPS** real-time processing
-- 💻 **Offline capability** - no cloud dependency
-- 🎯 **High accuracy** facial landmark detection
-- 🔄 **Auto pause/resume** when tab hidden
-- 📱 **Responsive** across devices
-
----
-
-## 🛠️ Technology Stack
-
-### Backend
-- **Python 3.8+** - Core language
-- **Flask** - Web framework
-- **OpenCV** - Computer vision
-- **MediaPipe** - Face mesh detection
-- **NumPy** - Numerical computing
-- **SciPy** - Distance calculations
-
-### Frontend
-- **HTML5** - Structure
-- **CSS3** - Premium dark mode styling
-- **JavaScript (ES6+)** - Interactivity
-- **Chart.js** - Real-time visualization
-
----
-
-## 📦 Installation
-
-### Prerequisites
-
-- Python 3.8 or higher
-- Webcam (built-in or external)
-- Modern web browser (Chrome, Firefox, Edge)
-- Windows/Mac/Linux operating system
-
-### Step 1: Clone or Download
-
-```bash
-cd "AI-Based Driver Drowsiness Detection"
-```
-
-### Step 2: Create Virtual Environment
-
-**Windows:**
-```powershell
-python -m venv venv
-venv\Scripts\activate
-```
-
-**Mac/Linux:**
-```bash
-python3 -m venv venv
-source venv/bin/activate
-```
-
-### Step 3: Install Dependencies
-
-```bash
-pip install -r requirements.txt
-```
-
-This will install:
-- Flask & Flask-CORS
+This allows the system to provide a gradual indication of increasing drowsiness.
+Alert System
+When the driver's drowsiness level reaches the alert threshold, the system activates the warning mechanism.
+The alert system provides:
+- Visual alert on the monitoring screen
+- Audible warning
+- Alert history
+- Alert timestamp
+- Recorded drowsiness score
+A short alert hold period is also used so that an alert does not disappear immediately when the measured score fluctuates between frames.
+The system also uses an alert cooldown to avoid continuously triggering new alert events.
+Technology Stack
+Backend
+- Python
+- Flask
 - OpenCV
 - MediaPipe
 - NumPy
-- SciPy
-
-### Step 4: Verify Installation
-
-```bash
-python -c "import cv2, mediapipe; print('✅ All dependencies installed successfully!')"
-```
-
----
-
-## 🚀 Usage
-
-### Start the Application
-
-1. **Navigate to backend directory:**
-   ```bash
-   cd backend
-   ```
-
-2. **Run the Flask server:**
-   ```bash
-   python app.py
-   ```
-
-3. **Open your browser:**
-   - Navigate to: `http://127.0.0.1:5000`
-   - Allow webcam permissions when prompted
-
-4. **Start monitoring:**
-   - The dashboard will load automatically
-   - Live video feed will appear on the left
-   - Statistics and graph on the right
-
-### Stopping the Application
-
-- Press `Ctrl+C` in the terminal to stop the server
-- The camera will be released automatically
-
----
-
-## 🎬 Demo Flow
-
-Perfect for hackathon presentations:
-
-### 1️⃣ **Opening (30 seconds)**
-- Show the professional dashboard
-- Explain the problem (drowsy driving statistics)
-- Introduce DriveSafe AI
-
-### 2️⃣ **Normal Operation (20 seconds)**
-- Demonstrate live webcam feed with face mesh
-- Point out real-time EAR and MAR values
-- Show the drowsiness graph updating
-
-### 3️⃣ **Drowsiness Detection (30 seconds)**
-- Close eyes for 3+ seconds
-- **Alert triggers!** 🚨
-  - Audio beep plays
-  - Screen flashes red
-  - Status changes to "ALERT"
-  - Graph spikes above threshold
-- Emphasize instant response time
-
-### 4️⃣ **Technical Explanation (20 seconds)**
-- Explain EAR algorithm briefly
-- Mention MediaPipe's 468 facial landmarks
-- Highlight offline capability
-
-### 5️⃣ **Impact Statement (20 seconds)**
-- "This system can save lives"
-- Mention real-world applications
-- Discuss future enhancements
-
-**Total Demo: ~2 minutes** ⏱️
-
----
-
-## 📊 How It Works
-
-### Eye Aspect Ratio (EAR)
-
-```
-EAR = (||p2-p6|| + ||p3-p5||) / (2 * ||p1-p4||)
-```
-
-- **EAR > 0.25** → Eyes open
-- **EAR < 0.25** → Eyes closed
-- **Prolonged closure (>2 seconds)** → Drowsiness detected
-
-### Mouth Aspect Ratio (MAR)
-
-```
-MAR = (vertical distance) / (horizontal distance)
-```
-
-- **MAR > 0.6** → Yawning detected
-- Frequent yawning indicates fatigue
-
-### Drowsiness Score Calculation
-
-```python
-score = 0
-if eye_closed_duration > 2_seconds: score += 40
-if blink_rate_excessive: score += 20
-if yawn_detected: score += 30
-if no_face_detected: score += 10
-
-# Final score: 0-100
-```
-
-**Alert Levels:**
-- 🟢 **0-30**: Normal
-- 🟡 **31-69**: Warning
-- 🔴 **70-100**: Alert (triggers audio/visual alarm)
-
----
-
-## 🎨 Dashboard Features
-
-### Video Panel
-- Live webcam stream with face mesh overlay
-- Real-time EAR and MAR display
-- FPS counter
-- Status badge (Normal/Warning/Alert)
-
-### Statistics Panel
-- **Current Status**: Visual indicator with emoji
-- **Drowsiness Meter**: Progress bar (0-100%)
-- **Live Metrics**:
-  - Eye blink count 👁️
-  - Yawn count 🥱
-  - EAR value ⚡
-  - MAR value 😮
-- **Alert History**: Total alerts and last alert time
-
-### Timeline Chart
-- Rolling 60-second drowsiness graph
-- Color-coded line (green/yellow/red)
-- Alert threshold line at 70%
-- Interactive tooltips
-
----
-
-## 🔧 Configuration
-
-### Adjusting Sensitivity
-
-Edit `backend/utils/eye_tracker.py`:
-```python
-self.EAR_THRESHOLD = 0.25  # Lower = more sensitive
-self.CONSECUTIVE_FRAMES = 20  # Higher = less sensitive
-```
-
-Edit `backend/utils/yawn_detector.py`:
-```python
-self.MAR_THRESHOLD = 0.6  # Lower = more sensitive
-self.CONSECUTIVE_FRAMES = 15  # Higher = less sensitive
-```
-
-### Alert Cooldown
-
-Edit `backend/utils/alert_manager.py`:
-```python
-self.alert_cooldown = 5  # seconds between alerts
-```
-
----
-
-## 🧪 Testing
-
-### Test Normal State
-1. Start the application
-2. Look at the camera normally
-3. Verify status shows "Normal" (green)
-4. Check EAR value is around 0.25-0.30
-
-### Test Drowsiness Detection
-1. Close your eyes for 3+ seconds
-2. Verify:
-   - ✅ Status changes to "Alert" (red)
-   - ✅ Audio beep plays
-   - ✅ Screen flashes red
-   - ✅ Drowsiness score jumps to 70+
-   - ✅ Graph shows spike
-
-### Test Yawn Detection
-1. Simulate a yawn (wide mouth opening)
-2. Verify:
-   - ✅ MAR value increases above 0.6
-   - ✅ Yawn count increments
-   - ✅ Drowsiness score increases
-
----
-
-## 📁 Project Structure
-
-```
-AI-Based Driver Drowsiness Detection/
+Frontend
+- HTML5
+- CSS3
+- JavaScript
+- Chart.js
+Development Tools
+- Visual Studio Code
+- Git
+- GitHub
+- Python Virtual Environment
+Project Structure
+DriveSafe-AI/
+│
 ├── backend/
-│   ├── app.py                    # Flask application
-│   ├── drowsiness_detector.py    # Core detection engine
+│   ├── app.py
+│   ├── drowsiness_detector.py
+│   │
 │   └── utils/
 │       ├── __init__.py
-│       ├── eye_tracker.py        # EAR calculation
-│       ├── yawn_detector.py      # MAR calculation
-│       └── alert_manager.py      # Alert logic
+│       ├── alert_manager.py
+│       ├── eye_tracker.py
+│       └── yawn_detector.py
+│
 ├── frontend/
-│   ├── index.html                # Dashboard
+│   ├── index.html
+│   │
 │   ├── css/
-│   │   └── style.css            # Dark mode styling
-│   ├── js/
-│   │   ├── main.js              # Core JavaScript
-│   │   └── chart-config.js      # Chart.js setup
-│   └── assets/
-│       └── alert-sound.mp3      # Audio alert
-├── requirements.txt              # Python dependencies
-└── README.md                     # This file
-```
+│   │   └── style.css
+│   │
+│   └── js/
+│       ├── main.js
+│       └── chart-config.js
+│
+├── generate_alert_sound.py
+├── requirements.txt
+├── setup.bat
+├── start_application.bat
+├── .gitignore
+└── README.md
 
----
+System Components
+backend/app.py
+The Flask application provides the backend services required by the monitoring interface.
+It handles:
+- Starting the Flask server
+- Video stream processing
+- Drowsiness status requests
+- Alert information
+- Communication with the frontend
+The application runs on port 5001.
+backend/drowsiness_detector.py
+This is the main detection component.
+It:
+1. Receives video frames.
+2. Converts frames for MediaPipe processing.
+3. Detects facial landmarks.
+4. Processes eye landmarks.
+5. Calculates EAR.
+6. Processes mouth landmarks.
+7. Calculates MAR.
+8. Determines eye closure and yawning conditions.
+9. Calculates the drowsiness score.
+10. Determines the current alert status.
+11. Displays detection information on the video frame.
+backend/utils/eye_tracker.py
+The eye tracker handles eye-related measurements.
+It is responsible for:
+- Extracting eye landmarks
+- Calculating EAR
+- Detecting eye closure
+- Tracking consecutive closed-eye frames
+- Tracking blink information
+- Maintaining eye-related detection data
+backend/utils/yawn_detector.py
+The yawn detector handles mouth-related measurements.
+It is responsible for:
+- Extracting mouth landmarks
+- Calculating MAR
+- Detecting sustained mouth opening
+- Detecting yawning
+- Tracking recent yawns
+backend/utils/alert_manager.py
+The alert manager combines the eye and mouth detection results.
+It is responsible for:
+- Calculating the drowsiness score
+- Determining Normal, Warning, and Alert states
+- Maintaining alert history
+- Applying alert cooldown
+- Maintaining a short alert hold period
+- Providing the current alert status
+User Interface
+The monitoring interface provides real-time information including:
+- Live camera feed
+- Current driver status
+- Drowsiness score
+- Eye blink count
+- Yawn count
+- EAR value
+- MAR value
+- Alert history
+- Drowsiness timeline
+The interface is designed to allow the user to understand the driver's current state while the detection system is running.
+Installation
+Requirements
+The project requires:
+- Python 3.10 or compatible Python version
+- Webcam
+- Internet connection for installing dependencies
+- A computer capable of running real-time video processing
+1. Clone the Repository
+git clone https://github.com/vijaysarathy-765/DriveSafe-AI.git
 
-## 🚀 Future Enhancements
+Move into the project directory:
+cd DriveSafe-AI
 
-### Phase 2 (Short-term)
-- [ ] SQLite session logging
-- [ ] Export session data to CSV
-- [ ] Head pose detection (tilting/nodding)
-- [ ] Multiple camera support
-- [ ] Custom alert sounds
+2. Create a Virtual Environment
+macOS / Linux
+python3 -m venv venv
 
-### Phase 3 (Medium-term)
-- [ ] SMS/Email alerts to emergency contacts
-- [ ] Mobile app (React Native)
-- [ ] Cloud dashboard for fleet management
-- [ ] Historical analytics and reports
-- [ ] Multi-language support
+Activate the environment:
+source venv/bin/activate
 
-### Phase 4 (Long-term)
-- [ ] Integration with car systems (OBD-II)
-- [ ] Steering pattern analysis
-- [ ] Heart rate monitoring (with wearables)
-- [ ] AI model fine-tuning with custom dataset
-- [ ] Edge device deployment (Raspberry Pi, Jetson)
+Windows
+python -m venv venv
 
----
+Activate the environment:
+venv\Scripts\activate
 
-## 🐛 Troubleshooting
+3. Install Dependencies
+pip install -r requirements.txt
 
-### Webcam Not Detected
-```python
-# Check available cameras
-import cv2
-for i in range(5):
-    cap = cv2.VideoCapture(i)
-    if cap.isOpened():
-        print(f"Camera {i} available")
-        cap.release()
-```
+Running the Application
+After activating the virtual environment and installing the dependencies, start the Flask application:
+python backend/app.py
 
-### Low FPS
-- Close other applications using the webcam
-- Reduce video resolution in `app.py`:
-  ```python
-  camera.set(cv2.CAP_PROP_FRAME_WIDTH, 480)
-  camera.set(cv2.CAP_PROP_FRAME_HEIGHT, 360)
-  ```
+The application runs on:
+http://localhost:5001
 
-### Audio Not Playing
-- Check browser permissions
-- Click anywhere on the page to enable audio
-- Try different browser (Chrome recommended)
+Open the address in a web browser.
+Make sure the webcam is available and allow camera access when required.
+Using the System
+1. Start the Flask application.
+2. Open the application in a web browser.
+3. Allow camera access.
+4. Position your face clearly in front of the camera.
+5. The system detects facial landmarks.
+6. EAR and MAR values are calculated continuously.
+7. Eye closure and yawning are monitored.
+8. The drowsiness score is updated in real time.
+9. If drowsiness reaches the alert level, the system activates a visual and audible warning.
+For reliable detection, the driver's face should remain reasonably visible to the camera.
+Drowsiness Detection Logic
+The system does not depend only on a single frame.
+Instead, it considers the driver's facial behavior over time.
+For example:
+Eyes open
+   ↓
+Normal EAR
+   ↓
+Normal Status
 
-### MediaPipe Errors
-```bash
-pip uninstall mediapipe
-pip install mediapipe==0.10.8
-```
+If the eyes remain closed:
+Low EAR
+   ↓
+Eyes remain closed
+   ↓
+Drowsiness indicators increase
+   ↓
+Warning / Alert
 
----
+Similarly, sustained mouth opening can produce:
+High MAR
+   ↓
+Possible yawn
+   ↓
+Drowsiness indicators increase
 
-## 📄 License
-
-This project is licensed under the **MIT License**.
-
-```
-MIT License
-
-Copyright (c) 2025 DriveSafe AI
-
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
-
-The above copyright notice and this permission notice shall be included in all
-copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-SOFTWARE.
-```
-
----
-
-## 🙏 Acknowledgments
-
-- **MediaPipe** by Google for facial landmark detection
-- **OpenCV** community for computer vision tools
-- **Chart.js** for beautiful visualizations
-- Research papers on drowsiness detection algorithms
-
----
-
-## 📧 Contact & Support
-
-For questions, suggestions, or contributions:
-
-- 👨‍💻 **Developer**: [Ajith Kumar Murugan](https://www.linkedin.com/in/ajitharunai/)
-- 🐛 **Report Issues**: [GitHub Issues](https://github.com/arunaiajith)
-- 💡 **Feature Requests**: Open a discussion on GitHub
-
----
-
-<div align="center">
-
-**Made with ❤️ for safer roads by [Ajith Kumar Murugan](https://www.linkedin.com/in/ajitharunai/)**
-
-⭐ Star this project if you find it useful!
-
-[Back to Top](#-drivesafe-ai---driver-drowsiness-detection-system)
-
-</div>
+The final drowsiness score combines these indicators.
+Advantages
+- Real-time monitoring
+- Non-contact detection
+- Uses a standard webcam
+- Does not require specialized wearable hardware
+- Combines eye and mouth behavior
+- Provides immediate warnings
+- Easy to run on a personal computer
+- Web-based monitoring interface
+Limitations
+The current system is a computer-vision prototype and its accuracy can be affected by environmental and user conditions.
+Possible limitations include:
+- Poor lighting
+- Face partially hidden from the camera
+- Extreme head movement
+- Camera quality
+- Incorrect camera positioning
+- Sunglasses or other objects covering the eyes
+- Multiple people appearing in the camera frame
+- Differences in individual facial features
+The system should therefore be considered an assistive safety prototype rather than a replacement for responsible driving or professional vehicle safety systems.
+Future Enhancements
+Possible future improvements include:
+- Improved head-pose estimation
+- Better performance under low-light conditions
+- Driver-specific calibration
+- More advanced drowsiness classification
+- Machine-learning-based fatigue prediction
+- Mobile application support
+- Cloud-based session monitoring
+- Driver session reports
+- GPS integration
+- Vehicle integration
+- Improved audio alert customization
+- Performance optimization for embedded devices
+Developer
+Vijay Sarathy A
+DriveSafe AI Developer and Project Contributor
+Key development and enhancement work includes:
+- Integration of MediaPipe facial landmark detection
+- Implementation and integration of EAR-based eye monitoring
+- Implementation and integration of MAR-based yawn monitoring
+- Improved eye closure and blink tracking
+- Improved yawn detection
+- Development of combined drowsiness scoring
+- Development of Normal, Warning, and Alert status handling
+- Alert cooldown and alert hold logic
+- Integration of the detection system with the Flask backend
+- Real-time monitoring interface integration
+- Project configuration and repository maintenance
+Attribution
+This project was developed by extending an existing open-source driver drowsiness detection implementation.
+The current version has been modified and enhanced with changes to the facial landmark-based detection pipeline, EAR/MAR processing, drowsiness scoring, alert management, and application integration.
