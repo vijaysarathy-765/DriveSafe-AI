@@ -1,129 +1,87 @@
 """
-Yawn Detection Module - Detect yawning using mouth aspect ratio
+Yawn Detection Module
+Landmark-based Mouth Aspect Ratio (MAR). A yawn = MAR stays high for a sustained time.
 """
+import time
+from collections import deque
+
 import numpy as np
 
 
 def euclidean_distance(point1, point2):
-    """Calculate Euclidean distance between two points"""
-    return np.sqrt(np.sum((np.array(point1) - np.array(point2)) ** 2))
+    """Euclidean distance between two points"""
+    return float(np.linalg.norm(np.asarray(point1, dtype=float) - np.asarray(point2, dtype=float)))
 
 
 class YawnDetector:
-    def __init__(self, mar_threshold=0.6, consecutive_frames=15):
+    def __init__(self, mar_threshold=0.6, yawn_seconds=1.2, recent_window=120.0):
         """
-        Initialize Yawn Detector
-        
         Args:
-            mar_threshold: MAR above this value indicates yawning (default: 0.6)
-            consecutive_frames: Number of consecutive frames to confirm yawn
+            mar_threshold: MAR above this = mouth wide open (default 0.6)
+            yawn_seconds: MAR must stay high this long to count as a yawn
+            recent_window: window (s) used to count 'recent yawns'
         """
         self.MAR_THRESHOLD = mar_threshold
-        self.CONSECUTIVE_FRAMES = consecutive_frames
-        self.yawn_counter = 0
-        self.total_yawns = 0
-        self.frame_counter = 0
-        
-        # MediaPipe Face Mesh landmark indices for mouth
-        # Outer lips landmarks
-        self.MOUTH_INDICES = [61, 291, 0, 17, 269, 405]  # Top, bottom, left, right
-    
-    def calculate_mar(self, mouth_landmarks):
-        """
-        Calculate Mouth Aspect Ratio (MAR).
-        
-        MAR = (vertical distance) / (horizontal distance)
-        
-        Args:
-            mouth_landmarks: List of (x, y) coordinates for mouth landmarks
-        
-        Returns:
-            float: Mouth Aspect Ratio value
-        """
-        # Vertical distance (top to bottom)
-        vertical = euclidean_distance(mouth_landmarks[0], mouth_landmarks[1])
-        
-        # Horizontal distance (left to right)
-        horizontal = euclidean_distance(mouth_landmarks[2], mouth_landmarks[3])
-        
-        # Calculate MAR
-        mar = vertical / horizontal if horizontal > 0 else 0
-        return mar
-    
+        self.YAWN_SECONDS = yawn_seconds
+        self.RECENT_WINDOW = recent_window
+
+        # Inner-lip landmarks (MediaPipe Face Mesh)
+        self.MOUTH_CORNERS = (78, 308)
+        self.MOUTH_VERTICAL = [(82, 87), (13, 14), (312, 317)]
+        self.reset()
+
+    def calculate_mar(self, lm_px):
+        """MAR = mean(vertical lip openings) / mouth width"""
+        horizontal = euclidean_distance(lm_px[self.MOUTH_CORNERS[0]], lm_px[self.MOUTH_CORNERS[1]])
+        vertical = np.mean([euclidean_distance(lm_px[a], lm_px[b]) for a, b in self.MOUTH_VERTICAL])
+        return float(vertical / horizontal) if horizontal > 0 else 0.0
+
     def extract_mouth_landmarks(self, face_landmarks, frame_width, frame_height):
-        """
-        Extract mouth landmark coordinates from MediaPipe face mesh results.
-        
-        Args:
-            face_landmarks: MediaPipe face landmarks
-            frame_width: Width of video frame
-            frame_height: Height of video frame
-        
-        Returns:
-            list: List of (x, y) coordinates for key mouth points
-        """
-        # Get specific mouth landmarks
-        # Top lip
-        top_lip = face_landmarks.landmark[13]
-        # Bottom lip
-        bottom_lip = face_landmarks.landmark[14]
-        # Left corner
-        left_corner = face_landmarks.landmark[61]
-        # Right corner
-        right_corner = face_landmarks.landmark[291]
-        
-        landmarks = [
-            [int(top_lip.x * frame_width), int(top_lip.y * frame_height)],
-            [int(bottom_lip.x * frame_width), int(bottom_lip.y * frame_height)],
-            [int(left_corner.x * frame_width), int(left_corner.y * frame_height)],
-            [int(right_corner.x * frame_width), int(right_corner.y * frame_height)]
-        ]
-        
-        return landmarks
-    
+        """Pixel coordinates for every mouth landmark we use, keyed by index"""
+        needed = set(self.MOUTH_CORNERS) | {i for pair in self.MOUTH_VERTICAL for i in pair}
+        return {i: (face_landmarks.landmark[i].x * frame_width,
+                    face_landmarks.landmark[i].y * frame_height) for i in needed}
+
     def process_frame(self, face_landmarks, frame_width, frame_height):
-        """
-        Process a single frame to detect yawning.
-        
-        Args:
-            face_landmarks: MediaPipe face landmarks
-            frame_width: Width of video frame
-            frame_height: Height of video frame
-        
-        Returns:
-            dict: Dictionary containing MAR values and yawn detection status
-        """
-        # Extract mouth landmarks
-        mouth_landmarks = self.extract_mouth_landmarks(face_landmarks, frame_width, frame_height)
-        
-        # Calculate MAR
-        mar = self.calculate_mar(mouth_landmarks)
-        
-        # Check if yawning
-        is_yawning = mar > self.MAR_THRESHOLD
-        
-        # Track consecutive frames with mouth open
+        now = time.time()
+        pts = self.extract_mouth_landmarks(face_landmarks, frame_width, frame_height)
+        mar = self.calculate_mar(pts)
+
+        is_yawning = bool(mar > self.MAR_THRESHOLD)          # mouth open wide right now
+        yawn_detected = False                                 # sustained => real yawn
+
         if is_yawning:
-            self.frame_counter += 1
+            if self._yawn_since is None:
+                self._yawn_since = now
+                self._counted = False
+            if now - self._yawn_since >= self.YAWN_SECONDS:
+                yawn_detected = True
+                if not self._counted:                         # count once per yawn
+                    self.total_yawns += 1
+                    self._yawn_times.append(now)
+                    self._counted = True
         else:
-            # Detect completed yawn
-            if self.frame_counter >= self.CONSECUTIVE_FRAMES:
-                self.total_yawns += 1
-            self.frame_counter = 0
-        
-        # Confirm yawn if sustained for enough frames
-        yawn_detected = self.frame_counter >= self.CONSECUTIVE_FRAMES
-        
+            self._yawn_since = None
+            self._counted = False
+
+        while self._yawn_times and now - self._yawn_times[0] > self.RECENT_WINDOW:
+            self._yawn_times.popleft()
+
         return {
             'mar': round(mar, 3),
             'is_yawning': is_yawning,
-            'yawn_count': self.total_yawns,
-            'yawn_detected': yawn_detected,
-            'mouth_landmarks': mouth_landmarks
+            'yawn_count': int(self.total_yawns),
+            'yawn_detected': bool(yawn_detected),
+            'recent_yawns': len(self._yawn_times),
+            'mouth_landmarks': list(pts.values()),
         }
-    
+
+    def on_no_face(self):
+        self._yawn_since = None
+        self._counted = False
+
     def reset(self):
-        """Reset all counters"""
-        self.yawn_counter = 0
         self.total_yawns = 0
-        self.frame_counter = 0
+        self._yawn_since = None
+        self._counted = False
+        self._yawn_times = deque()

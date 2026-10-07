@@ -1,15 +1,16 @@
 # Python
 __pycache__/
 *.py[cod]
-*$py.class
 *.so
 .Python
-venv/
-env/
-ENV/
 *.egg-info/
 dist/
 build/
+
+# Virtual environments
+venv/
+env/
+ENV/
 
 # IDEs
 .vscode/
@@ -26,3 +27,10 @@ desktop.ini
 # Project specific
 *.wav
 *.log
+
+# Backup / old files
+backend_old/venv/
+__pycache__/
+*.pyc
+.DS_Store
+backend_old/

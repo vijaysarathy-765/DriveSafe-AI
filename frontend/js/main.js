@@ -177,6 +177,73 @@ function updateAlertOverlay(status) {
 }
 
 /**
+ * Web Audio fallback: unlock on first user interaction, then beep without needing a WAV file
+ */
+let audioCtx = null;
+let soundBanner = null;
+
+// Floating button shown until the browser allows sound (hidden once audio is running)
+function updateSoundBanner() {
+    if (!document.body) return;
+    const ready = audioCtx && audioCtx.state === 'running';
+    if (!soundBanner) {
+        soundBanner = document.createElement('button');
+        soundBanner.textContent = '🔊 Click here to enable alert sound';
+        soundBanner.style.cssText = 'position:fixed;bottom:16px;right:16px;z-index:9999;padding:10px 16px;' +
+            'border:none;border-radius:8px;background:#ffd700;color:#000;font-weight:600;cursor:pointer;';
+        soundBanner.addEventListener('click', () => {
+            unlockAudio();
+            playBeep(); // short test beep so you know sound works
+        });
+        document.body.appendChild(soundBanner);
+    }
+    soundBanner.style.display = ready ? 'none' : 'block';
+}
+
+function unlockAudio() {
+    try {
+        audioCtx = audioCtx || new (window.AudioContext || window.webkitAudioContext)();
+        audioCtx.resume().then(updateSoundBanner).catch(() => { });
+    } catch (e) {
+        console.warn('Web Audio unavailable:', e);
+    }
+    updateSoundBanner();
+}
+
+// Browsers only allow sound after a real click/keypress ON THE PAGE (DevTools clicks don't count).
+// Keep trying on every gesture until audio is actually running.
+['click', 'keydown', 'touchstart', 'pointerdown'].forEach(ev =>
+    document.addEventListener(ev, () => {
+        if (!audioCtx || audioCtx.state !== 'running') unlockAudio();
+    }, true)
+);
+
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', updateSoundBanner);
+} else {
+    updateSoundBanner();
+}
+
+function playBeep() {
+    unlockAudio();
+    if (!audioCtx) return;
+
+    for (let i = 0; i < 3; i++) {
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.frequency.value = 880;
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+
+        const t = audioCtx.currentTime + i * 0.4;
+        gain.gain.setValueAtTime(0.4, t);
+        gain.gain.setValueAtTime(0, t + 0.25);
+        osc.start(t);
+        osc.stop(t + 0.3);
+    }
+}
+
+/**
  * Trigger audio and visual alert
  */
 function triggerAlert() {
@@ -189,15 +256,9 @@ function triggerAlert() {
 
     lastAlertSound = now;
 
-    // Play audio alert
-    if (elements.alertSound) {
-        elements.alertSound.currentTime = 0;
-        elements.alertSound.play().catch(err => {
-            console.warn('Audio playback failed:', err);
-            // Fallback: try to enable audio on user interaction
-            document.addEventListener('click', enableAudio, { once: true });
-        });
-    }
+    // Play audio alert: Web Audio beep (does not depend on the WAV file)
+    console.log('🔔 Alert triggered - playing beep (audio state: ' + (audioCtx ? audioCtx.state : 'not created') + ')');
+    playBeep();
 
     // Visual feedback (flash the screen red briefly)
     document.body.style.animation = 'flash-red 0.5s ease';
@@ -207,18 +268,6 @@ function triggerAlert() {
 
     // Update alert history
     updateAlertHistory();
-}
-
-/**
- * Enable audio (for browsers that require user interaction)
- */
-function enableAudio() {
-    if (elements.alertSound) {
-        elements.alertSound.play().then(() => {
-            elements.alertSound.pause();
-            elements.alertSound.currentTime = 0;
-        }).catch(() => { });
-    }
 }
 
 /**
